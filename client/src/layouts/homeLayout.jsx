@@ -1,12 +1,13 @@
 import { AiFillCloseCircle } from "react-icons/ai";
 import { FiMenu } from "react-icons/fi";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 
 import Footer from "../components/footer";
+import { logout } from "../redux/slices/authSlice";
 
 function HomeLayout({ children }) {
-    //const dispatch = useDispatch();
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const isLoggedIn = useSelector((state) => state?.auth?.isLoggedIn);
@@ -26,12 +27,11 @@ function HomeLayout({ children }) {
         drawerSide[0].style.width = "0";
     }
 
-    function handleLogout(e) {
+    async function handleLogout(e) {
         e.preventDefault();
 
-        //const res = await dispatch(logout())
-        // if (res?.payload?.success)
-        navigate("/");
+        const res = await dispatch(logout());
+        if (res?.payload?.success) navigate("/");
     }
     return (
         <div className="min-h-[90vh]">
@@ -90,7 +90,7 @@ function HomeLayout({ children }) {
                                         <Link to="/login">Login</Link>
                                     </button>
                                     <button className="btn-secondary px-4 py-1 font-semibold rounded-md w-full">
-                                        <Link to="/login">Signup</Link>
+                                        <Link to="/signup">Signup</Link>
                                     </button>
                                 </div>
                             </li>
