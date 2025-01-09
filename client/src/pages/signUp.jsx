@@ -17,6 +17,7 @@ function SignUp() {
         avatar: null,
     });
 
+
     function handleInput(e) {
         const { name, value } = e.target;
         setSignUpData((pre) => ({ ...pre, [name]: value }));
@@ -40,41 +41,39 @@ function SignUp() {
         }
     }
 
-    async function createAccount(event) {
-        event.preventDefault();
+  async function createAccount(event) {
+      event.preventDefault();
+      if (
+          !signUpData.email ||
+          !signUpData.password ||
+          !signUpData.fullname ||
+          !signUpData.avatar
+      ) {
+          toast.error("Please fill in all the details");
+          return;
+      }
 
-        if (
-            !signUpData.email ||
-            !signUpData.password ||
-            !signUpData.fullname ||
-            !signUpData.avatar
-        ) {
-            toast.error("Please fill in all the details");
-            return;
-        }
+      const formData = new FormData();
+      formData.append("fullname", signUpData.fullname);
+      formData.append("email", signUpData.email);
+      formData.append("password", signUpData.password);
+      if (signUpData.avatar) {
+          formData.append("avatar", signUpData.avatar);
+      } else {
+          toast.error("Avatar is missing in state!");
+      }
 
-        const formData = new FormData();
-        formData.append("fullName", signUpData.fullname);
-        formData.append("email", signUpData.email);
-        formData.append("password", signUpData.password);
+      const response = await dispatch(createNewAccount(formData));
+      if (response?.payload?.status) navigate("/");
 
-        if (signUpData.avatar) {
-            formData.append("avatar", signUpData.avatar);
-        } else {
-            toast.error("Avatar is missing in state!");
-        }
+      setSignUpData({
+          fullname: "",
+          email: "",
+          password: "",
+          avatar: null,
+      });
+  }
 
-        const response = await dispatch(createNewAccount(formData));
-
-        if (response?.payload?.status) navigate("/");
-
-        setSignUpData({
-            fullname: "",
-            email: "",
-            password: "",
-            avatar: null,
-        });
-    }
 
     useEffect(() => {}, [signUpData]);
 

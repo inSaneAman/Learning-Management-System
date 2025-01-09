@@ -13,9 +13,9 @@ const cookieOptions = {
 
 const register = async (req, res, next) => {
     try {
-        const { fullName, email, password } = req.body;
+        const { fullname, email, password } = req.body;
 
-        if (!fullName || !email || !password) {
+        if (!fullname || !email || !password) {
             return next(new AppError("All fields are required", 400));
         }
 
@@ -25,7 +25,7 @@ const register = async (req, res, next) => {
         }
 
         const user = await User.create({
-            fullName,
+            fullName: fullname,
             email,
             password,
             avatar: {
@@ -82,6 +82,7 @@ const register = async (req, res, next) => {
             user,
         });
     } catch (error) {
+        console.log(error);
         next(new AppError("Internal Server Error", 500));
     }
 };
@@ -189,7 +190,7 @@ const resetPassword = async (req, res, next) => {
         .createHash("sha256")
         .update(resetToken)
         .digest("hex");
-    
+
     if (!password) {
         return next(new AppError("Password is required", 400));
     }

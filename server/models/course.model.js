@@ -56,6 +56,6 @@ const courseSchema = new Schema(
     { timestamps: true }
 );
 
-const Course = model("Cousre", courseSchema);
+const Course = model("Course", courseSchema);
 
 export default Course;

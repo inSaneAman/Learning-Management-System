@@ -4,8 +4,7 @@ import cloudinary from "cloudinary";
 import fs from "fs/promises";
 import asyncHandler from "../middlewares/asyncHandler.js";
 const getAllCourses = asyncHandler(async function (req, res, next) {
-    const courses = await Course.find({}).select("-lectures");
-
+    const courses = await Course.find().select("-lectures");
     res.status(200).json({
         success: true,
         message: "All courses",
@@ -39,6 +38,7 @@ const createCourse = asyncHandler(async function (req, res, next) {
         description,
         category,
         createdBy,
+        thumbnail: { public_id: "default_id", secure_url: "default_url" },
     });
 
     if (!course) {
@@ -51,22 +51,17 @@ const createCourse = asyncHandler(async function (req, res, next) {
                 folder: "lms",
             });
 
-            if (result) {
+            if (result && result.secure_url && result.public_id) {
                 course.thumbnail.public_id = result.public_id;
                 course.thumbnail.secure_url = result.secure_url;
+            } else {
+                return next(new AppError("File upload failed", 500));
             }
 
-            fs.rm(`uploads/${req.file.filename}`);
+            await fs.rm(`uploads/${req.file.filename}`);
         } catch (error) {
-            for (const file of await fs.readdir("uploads/")) {
-                await fs.unlink(path.join("uploads/", file));
-            }
             return next(
-                new AppError(
-                    JSON.stringify(error) ||
-                        "File not uploaded, please try again",
-                    400
-                )
+                new AppError(error.message || "File upload failed", 500)
             );
         }
     }
@@ -129,7 +124,7 @@ const addLectureToCourseById = asyncHandler(async (req, res, next) => {
         return next(new AppError("Course ID is required", 400));
     }
 
-    let lectureData = {};
+    let lectureData = { public_id: "", secure_url: "" };
 
     if (!title || !description) {
         return next(new AppError("Title and description are required", 400));
@@ -144,8 +139,6 @@ const addLectureToCourseById = asyncHandler(async (req, res, next) => {
         try {
             const result = await cloudinary.v2.uploader.upload(req.file.path, {
                 folder: "lms",
-                chunk_size: 50000000,
-                resource_type: "video",
             });
 
             if (result) {
@@ -156,22 +149,26 @@ const addLectureToCourseById = asyncHandler(async (req, res, next) => {
             // Remove the uploaded file from the local server
             await fs.rm(`uploads/${req.file.filename}`);
         } catch (error) {
-            for (const file of await fs.readdir("uploads/")) {
-                await fs.unlink(path.join("uploads/", file));
-            }
             return next(
                 new AppError(error.message || "File upload failed", 500)
             );
         }
     }
 
-    if (!lectureData.lecture.public_id || !lectureData.lecture.secure_url) {
+    if (!lectureData.public_id || !lectureData.secure_url) {
         return next(
             new AppError("Thumbnail upload failed. Please try again.", 500)
         );
     }
 
-    course.lectures.push({ title, description, lecture: lectureData });
+    course.lectures.push({
+        title,
+        description,
+        lecture: {
+            public_id: lectureData.public_id,
+            secure_url: lectureData.secure_url,
+        },
+    });
     course.numberOfLectures = course.lectures.length;
 
     await course.save();
