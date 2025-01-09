@@ -35,6 +35,7 @@ const buySubscription = async (req, res, next) => {
         const subscription = await razorpay.subscriptions.create({
             plan_id: process.env.RAZORPAY_PLAN_ID,
             customer_notify: 1,
+            total_count: 12,
         });
 
         user.subscription.id = subscription.id;
@@ -66,10 +67,10 @@ const verifySubscription = async (req, res, next) => {
             return next(new AppError("Unauthorized, please login"));
         }
 
-        const subscriptionId = user.subscription_id;
+        const subscriptionId = user.subscription.id;
         const generatedSignature = crypto
             .createHmac("sha256", process.env.RAZORPAY_SCERET)
-            .update(`${razorpay_payment_id}| ${subscriptionId}`)
+            .update(`${razorpay_payment_id}|${subscriptionId}`)
             .digest("hex");
 
         if (generatedSignature !== razorpay_signature) {
@@ -95,34 +96,64 @@ const verifySubscription = async (req, res, next) => {
     }
 };
 
-const cancelSubscription = async (req, res, next) => {
+const cancelSubscription = asyncHandler(async (req, res, next) => {
+    const { id } = req.user;
+    const user = await User.findById(id);
+    if (user.role === "ADMIN") {
+        return next(
+            new AppError(
+                "Admin does not need to cannot cancel subscription",
+                400
+            )
+        );
+    }
+
+    const subscriptionId = user.subscription.id;
+
     try {
-        const { id } = req.user;
-        const user = await User.findById(id);
-
-        if (!user) {
-            return next(new AppError("Unauthorized, please login"));
-        }
-
-        if (user.role === "ADMIN") {
-            return next(
-                new AppError("Admin cannot purchase subscription", 400)
-            );
-        }
-
-        const subscriptionId = user.subscription_id;
-
         const subscription = await razorpay.subscriptions.cancel(
-            subscriptionId
+            subscriptionId // subscription id
         );
 
         user.subscription.status = subscription.status;
 
         await user.save();
     } catch (error) {
-        return next(new AppError(error.message), 500);
+        return next(new AppError(error.error.description, error.statusCode));
     }
-};
+
+    const payment = await Payment.findOne({
+        razorpay_subscription_id: subscriptionId,
+    });
+
+    const timeSinceSubscribed = Date.now() - payment.createdAt;
+
+    const refundPeriod = 14 * 24 * 60 * 60 * 1000;
+
+    if (refundPeriod <= timeSinceSubscribed) {
+        return next(
+            new AppError(
+                "Refund period is over, so there will not be any refunds provided.",
+                400
+            )
+        );
+    }
+
+    await razorpay.payments.refund(payment.razorpay_payment_id, {
+        speed: "optimum",
+    });
+
+    user.subscription.id = undefined;
+    user.subscription.status = undefined;
+
+    await user.save();
+    await payment.remove();
+
+    res.status(200).json({
+        success: true,
+        message: "Subscription canceled successfully",
+    });
+});
 
 const allPayments = asyncHandler(async (req, res, _next) => {
     const { count, skip } = req.query;

@@ -12,7 +12,7 @@ import {
     authorizedSubscriber,
     isLoggedIn,
 } from "../middlewares/auth.middleware.js";
-import {upload} from "../middlewares/multer.middleware.js";
+import upload from "../middlewares/multer.middleware.js";
 
 const router = new Router();
 

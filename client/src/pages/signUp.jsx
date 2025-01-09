@@ -27,7 +27,6 @@ function SignUp() {
         const uploadedImage = event.target.files[0];
 
         if (uploadedImage) {
-            // Create a copy of the state and update it
             setSignUpData((prevState) => ({
                 ...prevState,
                 avatar: uploadedImage,
@@ -36,10 +35,7 @@ function SignUp() {
             const fileReader = new FileReader();
             fileReader.readAsDataURL(uploadedImage);
             fileReader.onload = function () {
-                setPreviewImage(fileReader.result).log(
-                    "Image Preview: ",
-                    fileReader.result
-                );
+                setPreviewImage(fileReader.result);
             };
         }
     }

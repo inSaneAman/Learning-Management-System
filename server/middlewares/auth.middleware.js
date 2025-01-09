@@ -8,9 +8,14 @@ const isLoggedIn = async (req, res, next) => {
         return next(new AppError("Unauthenticated, please login again", 401));
     }
 
-    const userDetails = await jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = userDetails;
+    if (!decoded) {
+        return next(
+            new AppError("Unauthorized, please login to continue", 401)
+        );
+    }
+    req.user = decoded;
 
     next();
 };
@@ -34,6 +39,7 @@ const authorizedSubscriber = async (req, res, next) => {
             new AppError("Please subscribe to access this course", 403)
         );
     }
+    next();
 };
 
-export { isLoggedIn, authorizedRoles ,authorizedSubscriber};
+export { isLoggedIn, authorizedRoles, authorizedSubscriber };

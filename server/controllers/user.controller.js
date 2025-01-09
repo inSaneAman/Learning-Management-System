@@ -8,7 +8,7 @@ import crypto from "crypto";
 const cookieOptions = {
     maxAge: 7 * 24 * 60 * 60 * 1000, //7 days
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production" ? true : false,
 };
 
 const register = async (req, res, next) => {
@@ -31,7 +31,7 @@ const register = async (req, res, next) => {
             avatar: {
                 public_id: email,
                 secure_url:
-                    "https://www.shutterstock.com/image-photo/funny-dog-licking-lips-tongue-out-1761385949",
+                    "https://res.cloudinary.com/du9jzqlpt/image/upload/v1674647316/avatar_drzgxv.jpg",
             },
         });
 
@@ -54,13 +54,18 @@ const register = async (req, res, next) => {
                     }
                 );
 
-                user.avatar.public_id = result.public_id;
-                user.avatar.secure_url = result.secure_url;
+                if (result) {
+                    user.avatar.public_id = result.public_id;
+                    user.avatar.secure_url = result.secure_url;
 
-                await unlinkAsync(req.file.path);
+                    fs.rm(`uploads/${req.file.filename}`);
+                }
             } catch (error) {
                 return next(
-                    new AppError("File upload failed, please try again", 500)
+                    new AppError(
+                        error || "File upload failed, please try again",
+                        500
+                    )
                 );
             }
         }
@@ -69,11 +74,7 @@ const register = async (req, res, next) => {
 
         const token = await user.generateJWTToken();
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict",
-        });
+        res.cookie("token", token, cookieOptions);
 
         res.status(201).json({
             status: true,
@@ -95,14 +96,14 @@ const login = async (req, res, next) => {
 
         const user = await User.findOne({ email }).select("+password");
 
-        if (!user || !user.comparePassword(password)) {
+        if (!(user && (await user.comparePassword(password)))) {
             return next(new AppError("Email or password does not match", 400));
         }
 
         const token = await user.generateJWTToken();
         user.password = undefined;
 
-        res.cookie("token", token, { httpOnly: true, secure: true });
+        res.cookie("token", token, cookieOptions);
         res.status(200).json({
             success: true,
             message: "User logged in successfully",
@@ -112,11 +113,12 @@ const login = async (req, res, next) => {
         return next(new AppError(error.message, 500));
     }
 };
+
 const logout = (req, res) => {
-    res.clearCookie("token", {
+    res.cookie("token", null, {
+        secure: process.env.NODE_ENV === "production" ? true : false,
+        maxAge: 0,
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict",
     });
 
     res.status(200).json({
@@ -166,7 +168,7 @@ const forgotPassword = async (req, res, next) => {
         await sendEmail(email, subject, message);
 
         res.status(200).json({
-            success: "true",
+            success: true,
             message: `Reset password token has been sent to ${email} successfully`,
         });
     } catch (error) {
@@ -187,6 +189,10 @@ const resetPassword = async (req, res, next) => {
         .createHash("sha256")
         .update(resetToken)
         .digest("hex");
+    
+    if (!password) {
+        return next(new AppError("Password is required", 400));
+    }
 
     const user = await User.findOne({
         forgotPasswordToken,
@@ -203,7 +209,7 @@ const resetPassword = async (req, res, next) => {
     user.forgotPasswordToken = undefined;
     user.forgotPasswordExpiry = undefined;
 
-    user.save();
+    await user.save();
 
     res.status(200).json({
         success: true,
