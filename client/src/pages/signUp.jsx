@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { BsPersonCircle } from "react-icons/bs";
 import { useDispatch } from "react-redux";
@@ -14,12 +14,12 @@ function SignUp() {
         fullname: "",
         email: "",
         password: "",
-        avatar: "",
+        avatar: null,
     });
 
     function handleInput(e) {
         const { name, value } = e.target;
-        setSignUpData({ ...signUpData, [name]: value });
+        setSignUpData((pre) => ({ ...pre, [name]: value }));
     }
 
     function getImage(event) {
@@ -27,22 +27,26 @@ function SignUp() {
         const uploadedImage = event.target.files[0];
 
         if (uploadedImage) {
-            setSignUpData({
-                ...signUpData,
+            // Create a copy of the state and update it
+            setSignUpData((prevState) => ({
+                ...prevState,
                 avatar: uploadedImage,
-            });
+            }));
 
-            const fileReader = new FileReader(uploadedImage);
+            const fileReader = new FileReader();
             fileReader.readAsDataURL(uploadedImage);
-            fileReader.addEventListener("load", function () {
-                setPreviewImage(this.result);
-                console.log(this.result);
-            });
+            fileReader.onload = function () {
+                setPreviewImage(fileReader.result).log(
+                    "Image Preview: ",
+                    fileReader.result
+                );
+            };
         }
     }
 
     async function createAccount(event) {
         event.preventDefault();
+
         if (
             !signUpData.email ||
             !signUpData.password ||
@@ -53,48 +57,31 @@ function SignUp() {
             return;
         }
 
-        if (signUpData.fullname.length < 5) {
-            toast.error("Name must be atleast 5 characters long");
-            return;
-        }
-
-        if (
-            !signUpData.email.match(
-                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-            )
-        ) {
-            toast.error("Invalid email");
-            return;
-        }
-
-        if (
-            !signUpData.password.match(
-                /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,16}$/
-            )
-        ) {
-            toast.error(
-                "Password should be 6-16 characters long with atleast 1 number and 1 character"
-            );
-            return;
-        }
-
         const formData = new FormData();
-        formData.append("fullname", signUpData.fullname);
+        formData.append("fullName", signUpData.fullname);
         formData.append("email", signUpData.email);
         formData.append("password", signUpData.password);
-        formData.append("avatar", signUpData.avatar);
+
+        if (signUpData.avatar) {
+            formData.append("avatar", signUpData.avatar);
+        } else {
+            toast.error("Avatar is missing in state!");
+        }
 
         const response = await dispatch(createNewAccount(formData));
-        console.log(response);
-        if (response?.payload?.success) navigate("/");
+
+        if (response?.payload?.status) navigate("/");
 
         setSignUpData({
             fullname: "",
             email: "",
             password: "",
-            avatar: "",
+            avatar: null,
         });
     }
+
+    useEffect(() => {}, [signUpData]);
+
     return (
         <HomeLayout>
             <div className="flex items-center justify-center h-[90vh] w-full">

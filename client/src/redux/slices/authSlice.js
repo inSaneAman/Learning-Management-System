@@ -10,11 +10,12 @@ const initialState = {
 
 export const createNewAccount = createAsyncThunk(
     "/auth/signup",
-    async (data) => {
+    async (data, { rejectWithValue }) => {
         try {
-            const res = axiosInstance.post("users/register", data);
+            const res = axiosInstance.post("users/register", data); // Pass FormData directly
+
             toast.promise(res, {
-                loading: "Creating you account",
+                loading: "Creating your account...",
                 success: (data) => {
                     return data?.data?.message;
                 },
@@ -23,7 +24,10 @@ export const createNewAccount = createAsyncThunk(
 
             return (await res).data;
         } catch (error) {
-            toast.error(error?.response?.data?.message);
+            const errorMessage =
+                error?.response?.data?.message || "An error occurred";
+            toast.error(errorMessage);
+            return rejectWithValue(errorMessage);
         }
     }
 );
@@ -45,22 +49,26 @@ export const login = createAsyncThunk("/auth/login", async (data) => {
     }
 });
 
-export const logout = createAsyncThunk("/auth/logout", async () => {
-    try {
-        const res = axiosInstance.post("users/logout");
-        toast.promise(res, {
-            loading: "Logging you out",
-            success: (data) => {
-                return data?.data?.message;
-            },
-            error: "Failed to logout",
-        });
+export const logout = createAsyncThunk(
+    "/auth/logout",
+    async (_, { rejectWithValue }) => {
+        try {
+            const res = axiosInstance.post("users/logout");
+            toast.promise(res, {
+                loading: "Logging you out",
+                success: (data) => {
+                    return data?.data?.message;
+                },
+                error: "Failed to logout",
+            });
 
-        return (await res).data;
-    } catch (error) {
-        toast.error(error?.response?.data?.message);
+            return (await res).data;
+        } catch (error) {
+            toast.error(error?.response?.data?.message);
+            return rejectWithValue(error?.response?.data);
+        }
     }
-});
+);
 
 const authSlice = createSlice({
     name: "auth",

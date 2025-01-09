@@ -12,75 +12,81 @@ const cookieOptions = {
 };
 
 const register = async (req, res, next) => {
-    const { fullName, email, password } = req.body;
+    try {
+        const { fullName, email, password } = req.body;
 
-    if (!fullName || !email || !password) {
-        return next(new AppError("All fields are required", 400));
-    }
+        if (!fullName || !email || !password) {
+            return next(new AppError("All fields are required", 400));
+        }
 
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-        return next(new AppError("Email already exists", 400));
-    }
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return next(new AppError("Email already exists", 400));
+        }
 
-    const user = await User.create({
-        fullName,
-        email,
-        password,
-        avatar: {
-            public_id: email,
-            secure_url:
-                "https://www.shutterstock.com/image-photo/funny-dog-licking-lips-tongue-out-1761385949",
-        },
-    });
+        const user = await User.create({
+            fullName,
+            email,
+            password,
+            avatar: {
+                public_id: email,
+                secure_url:
+                    "https://www.shutterstock.com/image-photo/funny-dog-licking-lips-tongue-out-1761385949",
+            },
+        });
 
-    if (!user) {
-        return next(
-            new AppError("User Registration failed, please try again", 400)
-        );
-    }
+        if (!user) {
+            return next(
+                new AppError("User Registration failed, please try again", 400)
+            );
+        }
 
-    if (req.file) {
-        try {
-            const result = await cloudinary.v2.uploader.upload(req.file.path, {
-                folder: "lms",
-                width: 250,
-                height: 250,
-                gravity: "faces",
-                crop: "fill",
-            });
+        if (req.file) {
+            try {
+                const result = await cloudinary.v2.uploader.upload(
+                    req.file.path,
+                    {
+                        folder: "lms",
+                        width: 250,
+                        height: 250,
+                        gravity: "faces",
+                        crop: "fill",
+                    }
+                );
 
-            if (result) {
                 user.avatar.public_id = result.public_id;
                 user.avatar.secure_url = result.secure_url;
 
-                fs.rm(`uploads/${req.file.filename}`);
+                await unlinkAsync(req.file.path);
+            } catch (error) {
+                return next(
+                    new AppError("File upload failed, please try again", 500)
+                );
             }
-        } catch (error) {
-            return next(
-                new AppError(error || "File not uploaded, try again", 500)
-            );
         }
+        await user.save();
+        user.password = undefined;
+
+        const token = await user.generateJWTToken();
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "Strict",
+        });
+
+        res.status(201).json({
+            status: true,
+            message: "User registered successfully",
+            user,
+        });
+    } catch (error) {
+        next(new AppError("Internal Server Error", 500));
     }
-
-    await user.save();
-
-    user.password = undefined;
-
-    const token = await user.generateJWTToken();
-
-    res.cookie("token", token, cookieOptions);
-
-    res.status(201).json({
-        status: true,
-        message: "User is registered successfully",
-        user,
-    });
 };
 
 const login = async (req, res, next) => {
     try {
-        console.log("Request Body:", req.body);
         const { email, password } = req.body;
 
         if (!email || !password) {
@@ -106,12 +112,11 @@ const login = async (req, res, next) => {
         return next(new AppError(error.message, 500));
     }
 };
-
 const logout = (req, res) => {
-    res.cookie("token", null, {
-        secure: true,
-        maxAge: 0,
+    res.clearCookie("token", {
         httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
     });
 
     res.status(200).json({
@@ -153,7 +158,6 @@ const forgotPassword = async (req, res, next) => {
     await user.save();
 
     const resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-    console.log(resetPasswordURL);
 
     const subject = "Password Reset";
     const message = `You can reset your password by clicking <a href=${resetPasswordURL} target="_blank"> Reset your password</a>\n If the above link does not work for some reason then copy and paste this link in new tab ${resetPasswordURL}. \n If you have not requested this, kindly ignore.`;
