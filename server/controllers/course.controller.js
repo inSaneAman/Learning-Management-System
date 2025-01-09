@@ -139,7 +139,6 @@ const addLectureToCourseById = async (req, res, next) => {
     try {
         const { title, description } = req.body;
         const { id } = req.params;
-        console.log(req.body)
 
         // Validate required fields
         if (!id) {
@@ -164,7 +163,6 @@ const addLectureToCourseById = async (req, res, next) => {
             },
         };
 
-console.log(lectureData)
         if (req.file) {
             try {
                 const result = await cloudinary.v2.uploader.upload(
@@ -173,13 +171,11 @@ console.log(lectureData)
                         folder: "lms",
                     }
                 );
-                console.log(result)
-                
+
                 if (result) {
                     lectureData.lecture.public_id = result.public_id;
                     lectureData.lecture.secure_url = result.secure_url;
                 }
-                console.log(result)
 
                 // Remove the uploaded file from the local server
                 await fs.rm(`uploads/${req.file.filename}`);
@@ -190,10 +186,7 @@ console.log(lectureData)
             }
         }
 
-        if (
-            !lectureData.lecture.public_id ||
-            !lectureData.lecture.secure_url
-        ) {
+        if (!lectureData.lecture.public_id || !lectureData.lecture.secure_url) {
             return next(
                 new AppError("Thumbnail upload failed. Please try again.", 500)
             );
