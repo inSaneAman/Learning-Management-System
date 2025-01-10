@@ -1,6 +1,6 @@
-import asyncHandler from "../middlewares/asyncHandler.middleware.js";
+import asyncHandler from "../middlewares/asyncHandler.js";
 import User from "../models/user.model.js";
-import AppError from "../utils/AppError.js";
+import AppError from "../utils/error.util.js";
 import sendEmail from "../utils/sendEmail.js";
 
 export const contactUs = asyncHandler(async (req, res, next) => {
@@ -9,7 +9,7 @@ export const contactUs = asyncHandler(async (req, res, next) => {
     if (!name || !email || !message) {
         return next(new AppError("Name, Email, Message are required"));
     }
-
+    
     try {
         const subject = "Contact Us Form";
         const textMessage = `${name} - ${email} <br /> ${message}`;

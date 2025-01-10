@@ -4,6 +4,7 @@ import { BsPersonCircle } from "react-icons/bs";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 
+import { isEmail, isValidPassword } from "../helpers/regexMatcher";
 import HomeLayout from "../layouts/homeLayout";
 import { createNewAccount } from "../redux/slices/authSlice";
 function SignUp() {
@@ -16,7 +17,6 @@ function SignUp() {
         password: "",
         avatar: null,
     });
-
 
     function handleInput(e) {
         const { name, value } = e.target;
@@ -41,39 +41,52 @@ function SignUp() {
         }
     }
 
-  async function createAccount(event) {
-      event.preventDefault();
-      if (
-          !signUpData.email ||
-          !signUpData.password ||
-          !signUpData.fullname ||
-          !signUpData.avatar
-      ) {
-          toast.error("Please fill in all the details");
-          return;
-      }
+    async function createAccount(event) {
+        event.preventDefault();
+        if (
+            !signUpData.email ||
+            !signUpData.password ||
+            !signUpData.fullname ||
+            !signUpData.avatar
+        ) {
+            toast.error("Please fill in all the details");
+            return;
+        }
 
-      const formData = new FormData();
-      formData.append("fullname", signUpData.fullname);
-      formData.append("email", signUpData.email);
-      formData.append("password", signUpData.password);
-      if (signUpData.avatar) {
-          formData.append("avatar", signUpData.avatar);
-      } else {
-          toast.error("Avatar is missing in state!");
-      }
+        if (signUpData.fullname.length < 4) {
+            toast.error("Name should be atleast 4 characters");
+        }
 
-      const response = await dispatch(createNewAccount(formData));
-      if (response?.payload?.status) navigate("/");
+        if (!isEmail(signUpData.email)) {
+            toast.error("Invalid email");
+        }
 
-      setSignUpData({
-          fullname: "",
-          email: "",
-          password: "",
-          avatar: null,
-      });
-  }
+        if (!isValidPassword(signUpData.password)) {
+            toast.error(
+                "Password should be atleast 6-16 characters with atleast a number and special character"
+            );
+        }
 
+        const formData = new FormData();
+        formData.append("fullname", signUpData.fullname);
+        formData.append("email", signUpData.email);
+        formData.append("password", signUpData.password);
+        if (signUpData.avatar) {
+            formData.append("avatar", signUpData.avatar);
+        } else {
+            toast.error("Avatar is missing in state!");
+        }
+
+        const response = await dispatch(createNewAccount(formData));
+        if (response?.payload?.status) navigate("/");
+
+        setSignUpData({
+            fullname: "",
+            email: "",
+            password: "",
+            avatar: null,
+        });
+    }
 
     useEffect(() => {}, [signUpData]);
 
