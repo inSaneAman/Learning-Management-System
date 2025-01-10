@@ -5,7 +5,9 @@ function CourseCard({ data }) {
 
     return (
         <div
-            onClick={() => navigate("/course/description")}
+            onClick={() =>
+                navigate("/course/description", { state: { ...data } })
+            }
             className="text-white w-full sm:w-[22rem] h-[430px] shadow-lg rounded-2xl cursor-pointer group overflow-hidden bg-gradient-to-b from-zinc-700 to-zinc-800 hover:from-zinc-600 hover:to-zinc-700 transition-all duration-300"
         >
             <div className="overflow-hidden">
