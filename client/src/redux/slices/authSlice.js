@@ -5,7 +5,10 @@ import axiosInstance from "../../helpers/axiosInstance";
 const initialState = {
     isLoggedIn: localStorage.getItem("isLoggedIn") || false,
     role: localStorage.getItem("role") || "",
-    data: JSON.parse(localStorage.getItem("data")) || {},
+    data:
+        localStorage.getItem("data") !== undefined
+            ? JSON.parse(localStorage.getItem("data"))
+            : {},
 };
 
 export const createNewAccount = createAsyncThunk(
@@ -70,6 +73,39 @@ export const logout = createAsyncThunk(
     }
 );
 
+export const updateProfile = createAsyncThunk(
+    "/user/update/profile",
+    async (data) => {
+        try {
+            const res = axiosInstance.put(
+                `users/update-profile/${data[0]}`,
+                data[1]
+            );
+            toast.promise(res, {
+                loading: "Updating your profile",
+                success: (data) => {
+                    return data?.data?.message;
+                },
+                error: "Profile updation failed",
+            });
+
+            return (await res).data;
+        } catch (error) {
+            toast.error(error?.response?.data?.message);
+        }
+    }
+);
+
+export const getUserData = createAsyncThunk("/user/details", async () => {
+    try {
+        const res = axiosInstance.get(`users/user-profile`);
+
+        return (await res).data;
+    } catch (error) {
+        toast.error(error.message);
+    }
+});
+
 const authSlice = createSlice({
     name: "auth",
     initialState,
@@ -93,6 +129,17 @@ const authSlice = createSlice({
                 state.data = {};
                 state.isLoggedIn = false;
                 state.role = "";
+            })
+            .addCase(getUserData.fulfilled, (state, action) => {
+                localStorage.setItem(
+                    "data",
+                    JSON.stringify(action?.payload?.user)
+                );
+                localStorage.setItem("isLoggedIn", true);
+                localStorage.setItem("role", action?.payload?.user?.role);
+                state.isLoggedIn = true;
+                state.data = action?.payload?.user;
+                state.role = action?.payload?.user?.role;
             });
     },
 });
