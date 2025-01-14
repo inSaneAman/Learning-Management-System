@@ -82,7 +82,6 @@ const register = async (req, res, next) => {
             user,
         });
     } catch (error) {
-        console.log(error);
         next(new AppError("Internal Server Error", 500));
     }
 };

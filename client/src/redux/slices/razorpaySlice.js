@@ -5,7 +5,7 @@ import axiosInstance from "../../helpers/axiosInstance";
 
 const initialState = {
     key: "",
-    subscriptionId: "",
+    subscription_id: "",
     isPaymentVerified: false,
     allPayments: {},
     finalMonths: {},
@@ -17,7 +17,8 @@ export const getRazorpayId = createAsyncThunk("/razorpay/getId", async () => {
         const response = await axiosInstance.get("/payments/razorpay-key");
         return response.data;
     } catch (error) {
-        toast.error(error?.message || "Failed to load data");
+        toast.error(error?.message || "Failed to load Razorpay ID");
+        return null;
     }
 });
 
@@ -28,7 +29,10 @@ export const purchaseCourseBundle = createAsyncThunk(
             const response = await axiosInstance.post("/payments/subscribe");
             return response.data;
         } catch (error) {
-            toast.error(error?.response?.data?.message);
+            toast.error(
+                error?.response?.data?.message || "Subscription failed"
+            );
+            return null;
         }
     }
 );
@@ -37,14 +41,16 @@ export const verifyUserPayment = createAsyncThunk(
     "/payment/verify",
     async (data) => {
         try {
-            const response = await axiosInstance.get("/payments/verify", {
+            const response = await axiosInstance.post("/payments/verify", {
                 razorpay_payment_id: data.razorpay_payment_id,
                 razorpay_subscription_id: data.razorpay_subscription_id,
                 razorpay_signature: data.razorpay_signature,
             });
             return response.data;
         } catch (error) {
-            toast.error(error?.message || "Failed to load data");
+            toast.error(
+                error?.response?.data?.message || "Failed to load data"
+            );
         }
     }
 );
