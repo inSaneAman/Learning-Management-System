@@ -5,18 +5,16 @@ import axiosInstance from "../../helpers/axiosInstance";
 const initialState = {
     isLoggedIn: localStorage.getItem("isLoggedIn") || false,
     role: localStorage.getItem("role") || "",
-    data:
-        localStorage.getItem("data") !== undefined
-            ? JSON.parse(localStorage.getItem("data"))
-            : {},
+    data: localStorage.getItem("data")
+        ? JSON.parse(localStorage.getItem("data"))
+        : {},
 };
 
 export const createNewAccount = createAsyncThunk(
     "/auth/signup",
     async (data, { rejectWithValue }) => {
         try {
-            const res = axiosInstance.post("users/register", data); // Pass FormData directly
-
+            const res = axiosInstance.post("users/register", data);
             toast.promise(res, {
                 loading: "Creating your account...",
                 success: (data) => {
