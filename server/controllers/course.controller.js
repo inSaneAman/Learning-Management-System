@@ -3,6 +3,7 @@ import AppError from "../utils/error.util.js";
 import cloudinary from "cloudinary";
 import fs from "fs/promises";
 import asyncHandler from "../middlewares/asyncHandler.js";
+
 const getAllCourses = asyncHandler(async function (req, res, next) {
     const courses = await Course.find().select("-lectures");
     res.status(200).json({
@@ -119,7 +120,6 @@ const addLectureToCourseById = asyncHandler(async (req, res, next) => {
     const { title, description } = req.body;
     const { id } = req.params;
 
-    // Validate required fields
     if (!id) {
         return next(new AppError("Course ID is required", 400));
     }
@@ -180,6 +180,41 @@ const addLectureToCourseById = asyncHandler(async (req, res, next) => {
     });
 });
 
+const removeLectureFromCourse = asyncHandler(async (req, res, next) => {
+    const { courseId, lectureId } = req.query;
+
+    if (!courseId) {
+        return next(new AppError("Course ID is required", 400));
+    }
+
+    if (!lectureId) {
+        return next(new AppError("Lecture ID is required", 400));
+    }
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+        return next(new AppError("Invalid ID or Course does not exist.", 404));
+    }
+    const lectureIndex = course.lectures.findIndex(
+        (lecture) => lecture._id.toString() === lectureId.toString()
+    );
+    if (lectureIndex === -1) {
+        return next(new AppError("Lecture does not exist.", 404));
+    }
+
+    await cloudinary.v2.uploader.destroy(
+        course.lectures[lectureIndex].lecture.public_id
+    );
+    course.lectures.splice(lectureIndex, 1);
+    course.numberOfLectures = course.lectures.length;
+    await course.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Course lecture removed successfully",
+    });
+});
+
 export {
     getAllCourses,
     getLecturesByCourseId,
@@ -187,4 +222,5 @@ export {
     updateCourse,
     removeCourse,
     addLectureToCourseById,
+    removeLectureFromCourse,
 };
