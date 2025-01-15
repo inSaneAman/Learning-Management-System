@@ -1,11 +1,24 @@
+import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import HomeLayout from "../../layouts/homeLayout";
+import { getUserData } from "../../redux/slices/authSlice";
+import { cancelSubscription } from "../../redux/slices/razorpaySlice";
 
 function UserProfile() {
     const userData = useSelector((state) => state?.auth?.data);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    console.log("userdata",userData);
+    async function handleCancellation() {
+        toast("Initiating cancellation");
+        await dispatch(cancelSubscription());
+        await dispatch(getUserData());
+
+        toast.success("Cancellation completed");
+        navigate("/");
+    }
 
     return (
         <HomeLayout>
@@ -35,12 +48,12 @@ function UserProfile() {
                         <p className="font-medium">Subscription:</p>
                         <p
                             className={`${
-                                userData?.subscription?.status === "ACTIVE"
+                                userData?.subscription?.status === "active"
                                     ? "text-green-400"
                                     : "text-red-400"
                             } font-semibold`}
                         >
-                            {userData?.subscription?.status === "ACTIVE"
+                            {userData?.subscription?.status === "active"
                                 ? "Active"
                                 : "Inactive"}
                         </p>
@@ -63,8 +76,9 @@ function UserProfile() {
                         </Link>
                     </div>
 
-                    {userData?.subscription?.status === "ACTIVE" && (
+                    {userData?.subscription?.status === "active" && (
                         <button
+                            onClick={handleCancellation}
                             className="w-full py-2 rounded-md font-semibold bg-red-600 text-white hover:bg-red-500 
                                transition-all duration-300 ease-in-out shadow-md hover:shadow-red-500/50 hover:-translate-y-1"
                         >

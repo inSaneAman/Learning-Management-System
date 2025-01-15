@@ -27,7 +27,6 @@ export const buySubscription = asyncHandler(async (req, res, next) => {
             total_count: 12,
         });
 
-
         user.subscription.id = subscription.id;
         user.subscription.status = subscription.status;
         await user.save();
@@ -42,7 +41,6 @@ export const buySubscription = asyncHandler(async (req, res, next) => {
         return next(new AppError("Failed to create subscription", 500));
     }
 });
-
 
 export const verifySubscription = asyncHandler(async (req, res, next) => {
     const { id } = req.user;

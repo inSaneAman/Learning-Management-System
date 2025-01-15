@@ -4,12 +4,12 @@ import { BiRupee } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import HomeLayout from "../../Layouts/HomeLayout";
+import HomeLayout from "../../layouts/homeLayout";
 import {
     getRazorpayId,
     purchaseCourseBundle,
     verifyUserPayment,
-} from "../../Redux/Slices/RazorpaySlice";
+} from "../../redux/slices/razorpaySlice";
 
 function Checkout() {
     const dispatch = useDispatch();

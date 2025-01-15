@@ -13,6 +13,7 @@ import HomePage from "./pages/homePage.jsx";
 import Login from "./pages/login.jsx";
 import NotFound from "./pages/notFound.jsx";
 import Checkout from "./pages/Payment/checkout.jsx";
+import CheckoutFail from "./pages/Payment/checkoutFail.jsx";
 import CheckoutSuccess from "./pages/Payment/checkoutSuccess.jsx";
 import SignUp from "./pages/signUp.jsx";
 import EditProfile from "./pages/User/editProfile.jsx";
@@ -49,6 +50,7 @@ function App() {
                         path="/checkout/success"
                         element={<CheckoutSuccess />}
                     />
+                    <Route path="/checkout/fail" element={<CheckoutFail />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />}></Route>
