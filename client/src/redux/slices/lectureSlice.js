@@ -16,7 +16,7 @@ export const getCourseLectures = createAsyncThunk(
                 success: "Lectures fetched successfully",
                 error: "Failed to load lectures",
             });
-            return (await response).data
+            return (await response).data;
         } catch (error) {
             toast.error(error?.response?.data?.message);
         }
@@ -37,7 +37,7 @@ export const addCourseLectures = createAsyncThunk(
                 formData
             );
             toast.promise(response, {
-                loading: "Adding lectures",
+                loading: "Adding lecture",
                 success: "Lectures added successfully",
                 error: "Failed to add lectures",
             });
