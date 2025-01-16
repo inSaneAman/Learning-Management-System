@@ -14,6 +14,7 @@ const getAllCourses = asyncHandler(async function (req, res, next) {
 });
 
 const getLecturesByCourseId = asyncHandler(async function (req, res, next) {
+
     const { id } = req.params;
 
     const course = await Course.findById(id);

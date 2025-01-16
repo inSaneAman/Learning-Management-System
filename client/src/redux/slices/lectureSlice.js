@@ -16,6 +16,7 @@ export const getCourseLectures = createAsyncThunk(
                 success: "Lectures fetched successfully",
                 error: "Failed to load lectures",
             });
+            return (await response).data
         } catch (error) {
             toast.error(error?.response?.data?.message);
         }
@@ -40,6 +41,7 @@ export const addCourseLectures = createAsyncThunk(
                 success: "Lectures added successfully",
                 error: "Failed to add lectures",
             });
+            return (await response).data;
         } catch (error) {
             toast.error(error?.response?.data?.message);
         }
@@ -58,6 +60,7 @@ export const deleteCourseLectures = createAsyncThunk(
                 success: "Lectures deleted successfully",
                 error: "Failed to delete lectures",
             });
+            return (await response).data;
         } catch (error) {
             toast.error(error?.response?.data?.message);
         }
