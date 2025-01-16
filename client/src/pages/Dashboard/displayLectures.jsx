@@ -23,7 +23,6 @@ function DisplayLectures() {
     }, []);
 
     async function onLectureDelete(courseId, lectureId) {
-        console.log(courseId, lectureId);
         await dispatch(
             deleteCourseLectures({ courseId: courseId, lectureId: lectureId })
         );
@@ -34,31 +33,30 @@ function DisplayLectures() {
         <HomeLayout>
             <div className="flex flex-col items-center justify-center gap-10 min-h-[90vh] py-10 text-white">
                 <div className="text-center text-2xl font-semibold text-yellow-500">
-                    Course Name: {state?.title}
+                    Course Name: {state?.title || "Loading..."}
                 </div>
-                {lectures && lectures.length > 0 && (
+                {lectures && lectures.length > 0 ? (
                     <div className="flex flex-row justify-center gap-10 w-full">
                         <div className="space-y-5 w-[28rem] p-2 rounded-lg shadow-[0_0_10px_black]">
                             <img
                                 src={
-                                    lectures &&
                                     lectures[currentVideo]?.lecture?.secure_url
                                 }
-                                className="object-fill rounded-tl-lg rounded-tr-lg  w-full h-[20rem]"
+                                className="object-fill rounded-tl-lg rounded-tr-lg w-full h-[20rem]"
+                                alt="Lecture Thumbnail"
                             />
                             <div>
                                 <h1>
                                     <span className="text-yellow-500">
                                         Title:{" "}
                                     </span>
-                                    {lectures && lectures[currentVideo]?.title}
+                                    {lectures[currentVideo]?.title}
                                 </h1>
                                 <p>
                                     <span className="text-yellow-500 line-clamp-4">
                                         Description:{" "}
                                     </span>
-                                    {lectures &&
-                                        lectures[currentVideo]?.description}
+                                    {lectures[currentVideo]?.description}
                                 </p>
                             </div>
                         </div>
@@ -78,40 +76,48 @@ function DisplayLectures() {
                                     </button>
                                 )}
                             </li>
-                            {lectures &&
-                                lectures.map((lecture, idx) => {
-                                    return (
-                                        <li key={lecture._id}>
-                                            <p
-                                                className="cursor-pointer"
-                                                onClick={() =>
-                                                    setCurrentVideo(idx)
-                                                }
-                                            >
-                                                <span>
-                                                    {" "}
-                                                    {lecture?.title} :{" "}
-                                                </span>
-                                                {lecture?.description}
-                                            </p>
-                                            {role === "ADMIN" && (
-                                                <button
-                                                    onClick={() =>
-                                                        onLectureDelete(
-                                                            state?._id,
-                                                            lecture?._id
-                                                        )
-                                                    }
-                                                    className="btn-active btn-accent px-2 py-1 rounded-md font-semibold text-sm"
-                                                >
-                                                    Delete lecture
-                                                </button>
-                                            )}
-                                        </li>
-                                    );
-                                })}
+                            {lectures.map((lecture, idx) => (
+                                <li key={lecture._id}>
+                                    <p
+                                        className="cursor-pointer"
+                                        onClick={() => setCurrentVideo(idx)}
+                                    >
+                                        <span>{lecture?.title}: </span>
+                                        {lecture?.description}
+                                    </p>
+                                    {role === "ADMIN" && (
+                                        <button
+                                            onClick={() =>
+                                                onLectureDelete(
+                                                    state?._id,
+                                                    lecture?._id
+                                                )
+                                            }
+                                            className="btn-active btn-accent px-2 py-1 rounded-md font-semibold text-sm"
+                                        >
+                                            Delete lecture
+                                        </button>
+                                    )}
+                                </li>
+                            ))}
                         </ul>
                     </div>
+                ) : (
+                    role === "ADMIN" && (
+                        <div>
+                            {" "}
+                            <button
+                                onClick={() =>
+                                    navigate("/course/addlecture", {
+                                        state: { ...state },
+                                    })
+                                }
+                                className="btn-primary px-2 py-1 rounded-md font-semibold text-sm"
+                            >
+                                Add new lectures
+                            </button>
+                        </div>
+                    )
                 )}
             </div>
         </HomeLayout>
