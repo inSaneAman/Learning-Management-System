@@ -9,6 +9,7 @@ import CourseDescription from "./pages/Course/courseDescription.jsx";
 import CourseList from "./pages/Course/courseList.jsx";
 import CreateCourse from "./pages/Course/createCourse.jsx";
 import AddLecture from "./pages/Dashboard/addLecture.jsx";
+import AdminDashboard from "./pages/Dashboard/adminDashboard.jsx";
 import DisplayLectures from "./pages/Dashboard/displayLectures.jsx";
 import Denied from "./pages/denied.jsx";
 import HomePage from "./pages/homePage.jsx";
@@ -44,6 +45,10 @@ function App() {
                     <Route
                         path="/course/addlecture"
                         element={<AddLecture />}
+                    ></Route>
+                    <Route
+                        path="/admin/dashboard"
+                        element={<AdminDashboard />}
                     ></Route>
                 </Route>
                 <Route
