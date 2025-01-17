@@ -213,13 +213,14 @@ function AdminDashboard() {
                                         <td>{course?.category}</td>
                                         <td>{course?.createdBy}</td>
                                         <td>{course?.numberOfLectures}</td>
-                                        <td className="max-w-28 overflow-hidden text-ellipsis whitespace-nowrap">
+                                        <td className="max-w-80">
                                             <textarea
                                                 value={course?.description}
                                                 readOnly
-                                                className="w-80 h-auto bg-transparent resize-none"
+                                                className="w-80 max-h-20 bg-transparent resize-none overflow-y-auto p-1"
                                             ></textarea>
                                         </td>
+
                                         <td className="flex items-center gap-4">
                                             <button
                                                 onClick={() =>
